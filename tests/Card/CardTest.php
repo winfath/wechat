@@ -169,7 +169,7 @@ class CardTest extends TestCase
         $card = $this->getCard();
 
         $ticket = 'gQFF8DoAAAAAAAAAASxodHRwOi8vd2VpeGluLnFxLmNvbS9xL01VTzN0T0hsS1BwUlBBYUszbVN5AAIEughxVwMEAKd2AA==';
-        $card->showQRCode($ticket);
+        // $card->showQRCode($ticket);
     }
 
     //通过ticket换取二维码 链接
@@ -349,6 +349,22 @@ class CardTest extends TestCase
         $this->assertStringStartsWith(Card::API_CONSUME_CARD, $result['api']);
         $this->assertEquals($cardId, $result['params']['card_id']);
         $this->assertEquals($code, $result['params']['code']);
+
+        // test cardId
+        $result = $card->consume($code);
+        $this->assertStringStartsWith(Card::API_CONSUME_CARD, $result['api']);
+        $this->assertEquals($code, $result['params']['code']);
+        $this->assertArrayNotHasKey('card_id', $result['params']);
+
+        $result = $card->consume($cardId, $code);
+        $this->assertStringStartsWith(Card::API_CONSUME_CARD, $result['api']);
+        $this->assertEquals($code, $result['params']['code']);
+        $this->assertEquals($cardId, $result['params']['card_id']);
+
+        $result = $card->consume($code, $cardId);
+        $this->assertStringStartsWith(Card::API_CONSUME_CARD, $result['api']);
+        $this->assertEquals($code, $result['params']['code']);
+        $this->assertEquals($cardId, $result['params']['card_id']);
     }
 
     //Code解码接口
@@ -534,19 +550,29 @@ class CardTest extends TestCase
 
         $cardId = 'pdkJ9uJYAyfLXsUCwI2LdH2Pn1AU';
 
-        $requiredForm = [];
-        $requiredForm['common_field_id_list'] = [
-            'USER_FORM_INFO_FLAG_MOBILE',
-            'USER_FORM_INFO_FLAG_LOCATION',
-            'USER_FORM_INFO_FLAG_BIRTHDAY',
+        $requiredForm = [
+            'required_form' => [
+                'common_field_id_list' => [
+                    'USER_FORM_INFO_FLAG_MOBILE',
+                    'USER_FORM_INFO_FLAG_LOCATION',
+                    'USER_FORM_INFO_FLAG_BIRTHDAY',
+                ],
+                'custom_field_list' => [
+                    '喜欢的食物',
+                ],
+            ],
         ];
-        $requiredForm['custom_field_list'] = ['喜欢的食物'];
 
-        $optionalForm = [];
-        $optionalForm['common_field_id_list'] = [
-            'USER_FORM_INFO_FLAG_EMAIL',
+        $optionalForm = [
+            'optional_form' => [
+                'common_field_id_list' => [
+                    'USER_FORM_INFO_FLAG_EMAIL',
+                ],
+                'custom_field_list' => [
+                    '喜欢的食物',
+                ],
+            ],
         ];
-        $optionalForm['custom_field_list'] = ['喜欢的电影'];
 
         $result = $card->activateUserForm($cardId, $requiredForm, $optionalForm);
         $this->assertStringStartsWith(Card::API_ACTIVATE_USER_FORM, $result['api']);
